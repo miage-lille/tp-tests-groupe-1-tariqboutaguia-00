@@ -99,4 +99,121 @@ describe('Webinar Routes E2E', () => {
       });
     });
   });
+
+  describe('POST /webinars - Organize webinar', () => {
+    describe('Scenario: Happy path', () => {
+      it('should create a webinar', async () => {
+        // ARRANGE
+        const server = fixture.getServer();
+        const prisma = fixture.getPrismaClient();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 4); // 4 days from now
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        // ACT
+        const response = await supertest(server)
+          .post('/webinars')
+          .send({
+            title: 'New Webinar',
+            seats: '50',
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          })
+          .expect(201);
+
+        // ASSERT
+        expect(response.body).toHaveProperty('id');
+        expect(response.body.message).toEqual('Webinar created');
+
+        const createdWebinar = await prisma.webinar.findUnique({
+          where: { id: response.body.id },
+        });
+        expect(createdWebinar).not.toBeNull();
+        expect(createdWebinar?.title).toBe('New Webinar');
+        expect(createdWebinar?.seats).toBe(50);
+      });
+    });
+
+    describe('Scenario: Webinar scheduled too soon', () => {
+      it('should return 400 when webinar is scheduled too soon', async () => {
+        // ARRANGE
+        const server = fixture.getServer();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 1); // Only 1 day from now
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        // ACT
+        const response = await supertest(server)
+          .post('/webinars')
+          .send({
+            title: 'Too Soon Webinar',
+            seats: '50',
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          })
+          .expect(400);
+
+        // ASSERT
+        expect(response.body).toEqual({
+          error: 'Webinar must be scheduled at least 3 days in advance',
+        });
+      });
+    });
+
+    describe('Scenario: Too many seats', () => {
+      it('should return 400 when seats exceed 1000', async () => {
+        // ARRANGE
+        const server = fixture.getServer();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 4);
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        // ACT
+        const response = await supertest(server)
+          .post('/webinars')
+          .send({
+            title: 'Too Many Seats Webinar',
+            seats: '1001',
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          })
+          .expect(400);
+
+        // ASSERT
+        expect(response.body).toEqual({
+          error: 'Webinar must have at most 1000 seats',
+        });
+      });
+    });
+
+    describe('Scenario: Not enough seats', () => {
+      it('should return 400 when seats are 0', async () => {
+        // ARRANGE
+        const server = fixture.getServer();
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() + 4);
+        const endDate = new Date(startDate);
+        endDate.setHours(endDate.getHours() + 1);
+
+        // ACT
+        const response = await supertest(server)
+          .post('/webinars')
+          .send({
+            title: 'No Seats Webinar',
+            seats: '0',
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          })
+          .expect(400);
+
+        // ASSERT
+        expect(response.body).toEqual({
+          error: 'Webinar must have at least 1 seat',
+        });
+      });
+    });
+  });
 });

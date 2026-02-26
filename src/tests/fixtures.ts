@@ -36,9 +36,10 @@ export class TestServerFixture {
 
     // Exécuter les migrations (compatible Windows)
     const isWindows = process.platform === 'win32';
+    const prismaCliPath = './node_modules/prisma/build/index.js';
     const migrateCmd = isWindows
-      ? `powershell -Command "$env:DATABASE_URL='${dbUrl}'; npx prisma migrate deploy"`
-      : `DATABASE_URL=${dbUrl} npx prisma migrate deploy`;
+      ? `powershell -Command "$env:DATABASE_URL='${dbUrl}'; node ${prismaCliPath} migrate deploy"`
+      : `DATABASE_URL=${dbUrl} node ${prismaCliPath} migrate deploy`;
     await asyncExec(migrateCmd);
 
     await this.prismaClient.$connect();
