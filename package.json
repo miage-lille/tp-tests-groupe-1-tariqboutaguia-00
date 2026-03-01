@@ -18,6 +18,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",
     "@types/supertest": "^6.0.2",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
     "@typescript-eslint/parser": "^8.16.0",
     "eslint": "^9.16.0",
@@ -36,7 +37,8 @@
     "date-fns": "^4.1.0",
     "fastify": "^5.2.0",
     "http-errors": "^2.0.0",
-    "supertest": "^7.0.0"
+    "supertest": "^7.0.0",
+    "uuid": "^13.0.0"
   },
   "prisma": {
     "schema": "src/prisma/schema.prisma"
